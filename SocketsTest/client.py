@@ -4,6 +4,7 @@ host = "127.0.0.1"
 port = 65432
 mySocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 mySocket.connect((host, port))
+mySocket.setblocking(False)
 
 pygame.init()
 pygame.display.set_caption(u"Keyboard Events")
@@ -28,6 +29,13 @@ while True:
       mySocket.send("UP".encode("utf-8"))
     if event.key == pygame.K_DOWN:
       mySocket.send("DOWN".encode("utf-8"))
+
+  try:
+    data = mySocket.recv(1024)
+    data = data.decode("utf-8")
+    print("Response: " + data)
+  except BlockingIOError:
+    pass # do nothing if there's no data
 
 mySocket.close()
 pygame.quit()
