@@ -11,6 +11,7 @@ host = "127.0.0.1"
 port = 65432
 mySocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 mySocket.connect((host, port))
+mySocket.setblocking(False)
 
 class PygameController:
   comms = None
