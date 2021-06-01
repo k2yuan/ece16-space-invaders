@@ -1,5 +1,5 @@
 // ----------------------------------------------------------------------------------------------------
-// =========== Communication Code for Messaging via Hardware Serial or Bluetooth ============ 
+// =========== Communication Code for Messaging via Hardware Serial or Bluetooth ============
 // ----------------------------------------------------------------------------------------------------
 
 /*
@@ -36,12 +36,14 @@ void setupCommunication() {
  */
 String receiveMessage() {
   String message = "";
-  if (Ser.available() > 0) {
-    while (true) {
-      char c = Ser.read();
-      if (c == '\n')
-        break;
-      message += c;
+  if (Serial.available() > 0) {
+    while (true) { // loop forever until a newline is seen
+      char c = Serial.read();
+      if (c != char(-1)) { // if there is a character in the buffer
+        if (c == '\n')
+          break;
+        message += c;
+      }
     }
   }
   return message;
