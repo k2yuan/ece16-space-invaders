@@ -36,9 +36,9 @@ void setupCommunication() {
  */
 String receiveMessage() {
   String message = "";
-  if (Serial.available() > 0) {
+  if (Ser.available() > 0) {
     while (true) { // loop forever until a newline is seen
-      char c = Serial.read();
+      char c = Ser.read();
       if (c != char(-1)) { // if there is a character in the buffer
         if (c == '\n')
           break;
