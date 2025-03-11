@@ -10,7 +10,7 @@ port = 65432
 mySocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 mySocket.connect((host, port))
 mySocket.setblocking(False)
-# Set file
+# Set file to scores
 scorefile = "scores.csv"
 
 # Save data to file
@@ -48,7 +48,6 @@ class PygameController:
       # 3. Collect orientation and send to PyGame until user exits
       print("Use <CTRL+C> to exit the program.\n")
       top_score = load_score(scorefile)
-
 
       while True:
           try:
