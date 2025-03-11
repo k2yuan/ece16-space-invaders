@@ -10,7 +10,7 @@ port = 65432
 mySocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 mySocket.connect((host, port))
 mySocket.setblocking(False)
-# Set file to scores
+# Set file to scores.csv
 scorefile = "scores.csv"
 
 # Save data to file
