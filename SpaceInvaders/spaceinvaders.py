@@ -7,7 +7,8 @@ from pygame import *
 import sys
 from os.path import abspath, dirname
 from random import choice
-
+########## Kevin added numpy
+import numpy as np
 ''' ============================================================ '''
 import socket
 host = "127.0.0.1"
@@ -44,7 +45,6 @@ IMAGES = {name: image.load(IMAGE_PATH + '{}.png'.format(name)).convert_alpha()
 BLOCKERS_POSITION = 450
 ENEMY_DEFAULT_POSITION = 65  # Initial value for a new game
 ENEMY_MOVE_DOWN = 35
-
 
 class Ship(sprite.Sprite):
     def __init__(self):
@@ -373,6 +373,11 @@ class SpaceInvaders(object):
         self.life2 = Life(742, 3)
         self.life3 = Life(769, 3)
         self.livesGroup = sprite.Group(self.life1, self.life2, self.life3)
+        ########### Kevin initialized variables
+        self.lifeCount = 3
+        self.addr = None
+        self.lastSentLifeCount = -1
+        self.lastSentScore = -1
 
     def reset(self, score):
         self.player = Ship()
@@ -394,7 +399,9 @@ class SpaceInvaders(object):
         self.create_audio()
         self.makeNewShip = False
         self.shipAlive = True
-
+        #################### Kevin reinitialize lifeCount when reset()
+        self.lifeCount = 3
+        
     def make_blockers(self, number):
         blockerGroup = sprite.Group()
         for row in range(4):
@@ -466,10 +473,11 @@ class SpaceInvaders(object):
     ''' ============================================================ '''
     def check_input_udp_socket(self):
         try:
-            msg, _ = mySocket.recvfrom(1024) # receive 1024 bytes
+            #################### Kevin stores addr to send message back
+            msg, addr = mySocket.recvfrom(1024) # receive 1024 bytes
+            self.addr = addr
             msg = msg.decode('utf-8')
             print("Command: " + msg)
-
             if msg == "QUIT":
                 sys.exit()
             if msg == "FIRE":
@@ -529,6 +537,7 @@ class SpaceInvaders(object):
 
         score = scores[row]
         self.score += score
+
         return score
 
     def create_main_menu(self):
@@ -567,15 +576,25 @@ class SpaceInvaders(object):
 
         for player in sprite.groupcollide(self.playerGroup, self.enemyBullets,
                                           True, True).keys():
+            ################# Kevin added LifeCount value to keep track of lives, and send message if no lives left
             if self.life3.alive():
                 self.life3.kill()
+                self.lifeCount = 2
             elif self.life2.alive():
                 self.life2.kill()
+                self.lifeCount = 1
             elif self.life1.alive():
                 self.life1.kill()
+                self.lifeCount = 0
             else:
+                if self.addr:
+                    mySocket.sendto("DEAD".encode("UTF-8"), self.addr)
+                    scoreFinal = "Score: " + str(self.score)
+                    mySocket.sendto(scoreFinal.encode("UTF-8"), self.addr)
+                    print(f"Sent: DEAD and {scoreFinal}")
                 self.gameOver = True
                 self.startGame = False
+                
             self.sounds['shipexplosion'].play()
             ShipExplosion(player, self.explosionsGroup)
             self.makeNewShip = True
@@ -678,6 +697,26 @@ class SpaceInvaders(object):
                     self.check_input()
                     ''' ============================================================ '''
                     self.check_input_udp_socket()
+                    ######################## Kevin sending message once if there is a change in lifeCount
+                    if self.addr and self.lifeCount != self.lastSentLifeCount:
+                        if self.lifeCount == 3:
+                            mySocket.sendto("reset".encode("UTF-8"), self.addr)
+                            print("Sent: reset")
+                        elif self.lifeCount == 2:
+                            mySocket.sendto("DIEDONCE".encode("UTF-8"), self.addr)
+                            print("Sent: DIEDONCE")
+                        elif self.lifeCount == 1:
+                            mySocket.sendto("DIEDTWICE".encode("UTF-8"), self.addr)
+                            print("Sent: DIEDTWICE")
+                        elif self.lifeCount == 0:
+                            mySocket.sendto("DIEDTHRICE".encode("UTF-8"), self.addr)
+                            print("Sent: DIEDTHRICE")
+                        self.lastSentLifeCount = self.lifeCount
+                    if self.addr and int(self.score) != self.lastSentScore:
+                        mySocket.sendto(f"Score: {int(self.score)}".encode("UTF-8"), self.addr)
+                        print(f"Sent: {self.score}")
+                        self.lastSentScore = self.score
+
                     ''' ============================================================ '''
                     self.enemies.update(currentTime)
                     self.allSprites.update(self.keys, currentTime)
